@@ -86,6 +86,13 @@ modern browser. For sensitive wallet material, use a dedicated air-gapped
 machine and verify important addresses and descriptors with an independent
 wallet or signing device before receiving funds.
 
+The header status is only a browser hint. Some privacy-focused browsers,
+including Tor Browser configurations, deliberately report `navigator.onLine`
+as true even when networking is disabled. EntropyLab therefore labels that
+state **Unverified** and never probes the network. An **Offline** label means
+only that the browser reported offline; verify the air gap yourself before
+entering wallet secrets.
+
 To build the HTML file yourself, see [Building from source](#building-from-source).
 
 ### Verifying the download

@@ -14,8 +14,8 @@ const src = read("src/js/network-check.js");
 
 const loadModule = ({ onLine, withConnectionApi = false, hasElement = true }) => {
   const el = {
-    dataset: { state: "online" },
-    textContent: "Online",
+    dataset: { state: "unverified" },
+    textContent: "Unverified",
     attributes: {},
     setAttribute(name, value) {
       this.attributes[name] = value;
@@ -42,37 +42,39 @@ test("never generates network traffic", () => {
 
 // The tag's three faces move together, so each check reads all of them: a
 // state the colour follows, the visible word, and the label screen readers get.
-const assertOnline = (el) => {
-  assert.equal(el.dataset.state, "online");
-  assert.equal(el.textContent, "Online");
-  assert.equal(el.attributes["aria-label"], "Network status: online");
+const assertUnverified = (el) => {
+  assert.equal(el.dataset.state, "unverified");
+  assert.equal(el.textContent, "Unverified");
+  assert.equal(el.attributes["aria-label"], "Network status unverified; browser reports online");
+  assert.equal(el.attributes.title, el.attributes["aria-label"]);
 };
 
 const assertOffline = (el) => {
   assert.equal(el.dataset.state, "offline");
   assert.equal(el.textContent, "Offline");
-  assert.equal(el.attributes["aria-label"], "Network status: offline");
+  assert.equal(el.attributes["aria-label"], "Network status: browser reports offline; verify the air gap yourself");
+  assert.equal(el.attributes.title, el.attributes["aria-label"]);
 };
 
-test("reads online when a network adapter is available", () => {
-  assertOnline(loadModule({ onLine: true }).el);
+test("treats navigator.onLine true as unverified", () => {
+  assertUnverified(loadModule({ onLine: true }).el);
 });
 
 test("reads offline when no network adapter is available", () => {
   assertOffline(loadModule({ onLine: false }).el);
 });
 
-test("reads online when the online event fires", () => {
+test("returns to unverified when the online event fires", () => {
   const { el, listeners, nav } = loadModule({ onLine: false });
   assertOffline(el);
   nav.onLine = true;
   listeners.online();
-  assertOnline(el);
+  assertUnverified(el);
 });
 
 test("reads offline when the offline event fires", () => {
   const { el, listeners, nav } = loadModule({ onLine: true });
-  assertOnline(el);
+  assertUnverified(el);
   nav.onLine = false;
   listeners.offline();
   assertOffline(el);
@@ -80,7 +82,7 @@ test("reads offline when the offline event fires", () => {
 
 test("re-checks when the Network Information API reports a change", () => {
   const { el, connectionListeners, nav } = loadModule({ onLine: true, withConnectionApi: true });
-  assertOnline(el);
+  assertUnverified(el);
   assert.equal(typeof connectionListeners.change, "function");
   nav.onLine = false;
   connectionListeners.change();
@@ -88,7 +90,7 @@ test("re-checks when the Network Information API reports a change", () => {
 });
 
 test("works without the Network Information API (Firefox/Safari)", () => {
-  assertOnline(loadModule({ onLine: true, withConnectionApi: false }).el);
+  assertUnverified(loadModule({ onLine: true, withConnectionApi: false }).el);
 });
 
 test("never leaves a stale offline tag standing when the adapter returns", () => {
@@ -98,7 +100,7 @@ test("never leaves a stale offline tag standing when the adapter returns", () =>
   assertOffline(el);
   nav.onLine = true;
   listeners.online();
-  assertOnline(el);
+  assertUnverified(el);
   nav.onLine = false;
   listeners.offline();
   assertOffline(el);
@@ -109,7 +111,7 @@ test("does not throw when the status tag is missing", () => {
   assert.doesNotThrow(() => loadModule({ onLine: false, hasElement: false }));
 });
 
-test("the status tag ships online, sits in the header, and is wired to the build", () => {
+test("the status tag ships unverified, sits in the header, and is wired to the build", () => {
   const template = read("src/index.html");
   const app = read("src/js/app.js");
   const build = read("scripts/build.mjs");
@@ -121,24 +123,23 @@ test("the status tag ships online, sits in the header, and is wired to the build
     assert.ok(tag, "the network status tag is missing from the live document");
     // Ships in the cautionary state: a script-less or not-yet-checked render
     // must never claim an air gap that nothing has verified.
-    assert.match(tag, /data-state="online"/);
+    assert.match(tag, /data-state="unverified"/);
     assert.match(tag, /role="status"/);
-    assert.match(doc, /id="network-status"[^>]*>Online</);
+    assert.match(doc, /id="network-status"[^>]*>Unverified</);
     // It belongs to the header, not the page body the banner used to sit in.
     const header = doc.indexOf('<div class="site-header no-print">');
     const wrapper = doc.indexOf('<div class="wrap">');
     const tagAt = doc.indexOf('id="network-status"');
     assert.ok(header < tagAt && tagAt < wrapper, "the status tag must sit inside the header");
-    // The banner it replaced is gone from the live document; only the TODO
-    // comment keeps its copy, for the modal that is to come.
+    // The old banner and its stale network-detected modal copy are gone.
     assert.doesNotMatch(doc, /id="network-warning"/);
-    assert.match(markup, /TODO:[\s\S]*?air-gapped computer\." -->/);
+    assert.doesNotMatch(markup, /Network detected:/);
   }
   assert.match(template, /\/\*@@JS_NETWORK@@\*\//);
   assert.match(build, /network-check\.js/);
-  // Green when offline, bright red when online, carried by the text alone.
+  // Green when the browser reports offline, bright red while unverified.
   assert.match(css, /\.network-status\[data-state="offline"\] \{ color: var\(--ok-bright\); \}/);
-  assert.match(css, /\.network-status\[data-state="online"\] \{ color: var\(--danger-bright\); \}/);
+  assert.match(css, /\.network-status\[data-state="unverified"\] \{ color: var\(--danger-bright\); \}/);
   // Both themes have to define these, or one of them falls back to nothing.
   for (const token of ["--danger-bright", "--ok-bright"]) {
     assert.match(css, new RegExp(":root \\{[^}]*" + token + ":", "s"));
@@ -153,8 +154,8 @@ test("the status tag ships online, sits in the header, and is wired to the build
   // clears that by ~2px, so its height cannot be left to the font's metrics.
   assert.match(css, /\.network-status \{[^}]*line-height: 1;/s);
   // The bar's own rule follows the tag, off the same attribute, so the two can
-  // never disagree about whether an adapter is live.
-  assert.match(css, /\.site-header:has\(\.network-status\[data-state="online"\]\) \{ border-bottom-color: var\(--danger\); \}/);
+  // never disagree about whether network status remains unverified.
+  assert.match(css, /\.site-header:has\(\.network-status\[data-state="unverified"\]\) \{ border-bottom-color: var\(--danger\); \}/);
   // Nothing repaints it for the offline state; it falls back to the grey.
   assert.match(css, /\.site-header \{[^}]*border-bottom: 1px solid var\(--border\);/s);
   // Left-aligned under the lockup, which needs the header row as its containing

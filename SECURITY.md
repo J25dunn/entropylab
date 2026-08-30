@@ -19,6 +19,11 @@ material. Its security posture rests on the following model:
 
 - The tool is self-contained and designed for offline, air-gapped use. It does
   not intentionally transmit sensitive data to any server.
+- The header network status is a passive browser hint, not an air-gap test.
+  EntropyLab never probes a remote host, and privacy-focused browsers may force
+  `navigator.onLine` to true to resist fingerprinting. **Unverified** means the
+  browser did not report offline; **Offline** still requires the user to verify
+  that all network interfaces are disabled.
 - EntropyLab's own secp256k1 curve operations (public-key derivation, ECDSA
   signing and verification in PSBT inspection, curve point math) run on
   bitcoin-core/libsecp256k1 (the library securing Bitcoin Core), compiled to

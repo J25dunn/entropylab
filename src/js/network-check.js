@@ -1,24 +1,24 @@
 
-// Network check: drives the header status tag, which reads ONLINE in red when
-// this computer has a network adapter available and OFFLINE in green when it
-// does not. Detection relies on navigator.onLine plus the online/offline
-// events only — no network traffic of any kind is ever generated. When onLine
-// is false the OS reports no usable network adapter, so the machine is
-// offline. When true, an adapter is available with a link; that includes
-// a LAN without internet access, which still matters for an air-gap
-// warning. Browsers intentionally offer no finer-grained adapter
-// introspection, so an OFFLINE tag is not proof of an air gap.
+// Network check: drives the header status tag from navigator.onLine and its
+// events without generating any network traffic. Browsers may force onLine to
+// true for anti-fingerprinting (including Tor Browser), so true is UNVERIFIED,
+// not proof that this computer is connected. False is shown as OFFLINE, but is
+// still only the browser's report and not proof of an air gap.
 (() => {
   const TAG_ID = "network-status";
 
-  // The markup ships in the online state, so every path here either confirms
-  // it or downgrades it; the tag can never be left claiming an unverified gap.
+  // The markup ships unverified, so a script-less or not-yet-checked page can
+  // never claim an air gap.
   const setStatus = (online) => {
     const tag = document.getElementById(TAG_ID);
     if (!tag) return;
-    tag.dataset.state = online ? "online" : "offline";
-    tag.textContent = online ? "Online" : "Offline";
-    tag.setAttribute("aria-label", online ? "Network status: online" : "Network status: offline");
+    tag.dataset.state = online ? "unverified" : "offline";
+    tag.textContent = online ? "Unverified" : "Offline";
+    const message = online
+      ? "Network status unverified; browser reports online"
+      : "Network status: browser reports offline; verify the air gap yourself";
+    tag.setAttribute("aria-label", message);
+    tag.setAttribute("title", message);
   };
 
   const checkNetwork = () => {

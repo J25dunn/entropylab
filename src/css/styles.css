@@ -520,7 +520,7 @@ td { border-top: 1px solid var(--border); padding: 8px; vertical-align: top; fon
    still writes exactly one attribute. It takes --danger, not --danger-bright:
    a full-width rule at the brighter red would outshout the word it is warning
    about, so the brightest red stays reserved for the tag's text. */
-.site-header:has(.network-status[data-state="online"]) { border-bottom-color: var(--danger); }
+.site-header:has(.network-status[data-state="unverified"]) { border-bottom-color: var(--danger); }
 /* The tight gap belongs to the mark and wordmark, which read as one lockup.
    Everything after them buys its own breathing room back with a margin. */
 .site-header-inner {
@@ -580,7 +580,7 @@ td { border-top: 1px solid var(--border); padding: 8px; vertical-align: top; fon
   text-indent: 0.1em; white-space: nowrap;
 }
 .network-status[data-state="offline"] { color: var(--ok-bright); }
-.network-status[data-state="online"] { color: var(--danger-bright); }
+.network-status[data-state="unverified"] { color: var(--danger-bright); }
 /* min-width: 0 lets the row shrink on narrow screens rather than pushing the
    controls out of the bar. */
 .download-controls { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; margin-left: auto; min-width: 0; }
