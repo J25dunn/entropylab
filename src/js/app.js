@@ -638,7 +638,7 @@ ec.innerHTML = `
         <div><div class="kicker">Multiple keys, one wallet</div><h2>Derive a multisig wallet</h2></div>
         <button class="btn delete-key" id="delete-msig" type="button" aria-label="Delete current multisig" disabled>Delete Multisig</button>
       </div>
-      <p class="muted msig-intro">Combine extended public keys into a multisignature wallet. Paste each key origin and extended public key as exported by its signer: <span class="mono">[fingerprint/48h/0h/0h/2h]xpub\u2026</span>. Private keys are not needed. The derived addresses can receive bitcoin, and spending requires the configured number of signatures.</p>
+      <p class="muted msig-intro">Combine extended public keys into a multisignature wallet. Each co-signer field accepts exactly one extended public key, optionally preceded by its key origin: <span class="mono">[fingerprint/48h/0h/0h/2h]xpub\u2026</span>. Do not paste a complete output descriptor. Private keys are not needed. The derived addresses can receive bitcoin, and spending requires the configured number of signatures.</p>
       <div class="msig-threshold-labels">
         <label for="msig-m-number"><span>Signatures needed to spend (m)</span><input class="msig-threshold-number" id="msig-m-number" type="number" min="1" max="15" step="1" value="2" inputmode="numeric" aria-describedby="msig-threshold-help"></label>
         <label for="msig-n-number"><span>Total signing keys (n)</span><input class="msig-threshold-number" id="msig-n-number" type="number" min="1" max="15" step="1" value="3" inputmode="numeric" aria-describedby="msig-threshold-help"></label>
@@ -5954,6 +5954,9 @@ function hodlAssertPrivateKeyKind(value, network, kind, trimBrainWallet = false)
   hf(decoded.priv);
   return candidate;
 }
+function hodlLooksOutputDescriptor(raw) {
+  return /^[a-z][a-z0-9_]*\s*\(/i.test(String(raw ?? "").trim());
+}
 function hodlFilterXpub(e) {
   return String(e ?? "").replace(/[^A-Za-z0-9[\]/']/g, "");
 }
@@ -6086,6 +6089,7 @@ function hodlSummarizeMultisigScriptKinds(kinds) {
   }
 }
 function hodlParseMultisigCosigner(raw) {
+  if (hodlLooksOutputDescriptor(raw)) throw new Error("Paste one extended public key per co-signer field, optionally with [fingerprint/path] origin notation. Do not paste a complete output descriptor.");
   let parsedOrigin = hodlParseKeyOrigin(raw), parsed = uf(parsedOrigin.key);
   parsed.origin = parsedOrigin.origin;
   return parsed;
@@ -6678,6 +6682,7 @@ function hodlFillKeys(values) {
     row.appendChild(lab);
     box.appendChild(row);
     ta.oninput = () => {
+      ta.dataset.outputDescriptor = hodlLooksOutputDescriptor(ta.value) ? "true" : "";
       ta.value = hodlFilterXpub(ta.value);
       hodlUpdateMsigScriptDetection();
       document.querySelectorAll("#msig-keys textarea").forEach(hodlCheckXpub);
@@ -6749,6 +6754,7 @@ function hodlCheckXpub(ta) {
     return;
   }
   try {
+    if (ta.dataset.outputDescriptor === "true") throw new Error("Paste one extended public key per co-signer field, optionally with [fingerprint/path] origin notation. Do not paste a complete output descriptor.");
     let parsed = hodlParseMultisigCosigner(value), coinType = hodlReadCoinType(document.getElementById("msig-network")), network = hodlNetworkFromCoinType(coinType), kind = hodlScriptKind(), purpose = hodlReadMsigPurpose(), hardening = hodlReadHardening("msig-");
     if (kind === "mixed") throw new Error("These keys do not define one compatible multisig policy. Use one script type.");
     if (parsed.isPrivate) throw new Error("Paste an extended public key, never an extended private key.");
@@ -6937,6 +6943,7 @@ function hodlValidatedMsigInputs() {
   for (let index = 0; index < n; index++) {
     let field = document.getElementById("msig-x-" + index), raw = field?.value.trim() || "";
     if (!raw) throw new Error("Paste an origin and extended public key for co-signer " + (index + 1) + ".");
+    if (field?.dataset.outputDescriptor === "true") throw new Error("Co-signer " + (index + 1) + ": paste one extended public key, optionally with [fingerprint/path] origin notation. Do not paste a complete output descriptor.");
     let parsed = hodlParseMultisigCosigner(raw);
     if (parsed.isPrivate) throw new Error("Co-signer " + (index + 1) + " is an extended private key. Paste only an extended public key.");
     if (parsed.network !== network) throw new Error(`Co-signer ${index + 1}'s ${parsed.prefix} is for ${parsed.network}, but this multisig is set to ${network}.`);
