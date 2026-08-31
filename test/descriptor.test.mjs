@@ -85,6 +85,14 @@ const {
 } = await import(pathToFileURL(originPath).href);
 unlinkSync(originPath);
 
+const cosignerPath = loadSlice(
+  "function hodlLooksOutputDescriptor",
+  "function hodlDetectMsigScriptSummary",
+  "function uf(key) { return { key }; }\nexport { hodlParseMultisigCosigner };",
+);
+const { hodlParseMultisigCosigner } = await import(pathToFileURL(cosignerPath).href);
+unlinkSync(cosignerPath);
+
 
 const checksumPrelude = `
 const INPUT_CHARSET = ${JSON.stringify(INPUT_CHARSET)};
@@ -106,6 +114,23 @@ test("filter keeps descriptor origin punctuation", () => {
   const raw = "[73c5da0a/48h/1h/0h/2h]tpubABC";
   assert.equal(hodlFilterXpub(raw), raw);
   assert.equal(hodlFilterXpub("[73c5da0a/48'/1'/0'/2']tpubABC"), "[73c5da0a/48'/1'/0'/2']tpubABC");
+});
+
+test("multisig co-signer fields reject complete output descriptors explicitly", () => {
+  for (const descriptor of [
+    "wsh(sortedmulti(2,[73c5da0a/48h/0h/0h/2h]xpubABC/0/*,[b8688df1/48h/0h/0h/2h]xpubDEF/0/*))#checksum",
+    "sh(wsh(sortedmulti(2,xpubABC,xpubDEF)))",
+    "tr(xpubABC)",
+  ]) {
+    assert.throws(
+      () => hodlParseMultisigCosigner(descriptor),
+      /one extended public key per co-signer field.*Do not paste a complete output descriptor/,
+    );
+  }
+  assert.deepEqual(hodlParseMultisigCosigner("[73c5da0a/48h/0h/0h/2h]xpubABC"), {
+    key: "xpubABC",
+    origin: { fingerprint: "73c5da0a", path: "48h/0h/0h/2h" },
+  });
 });
 
 test("origin parse normalizes apostrophes and strips /0/*", () => {

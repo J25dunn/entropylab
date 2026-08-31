@@ -241,7 +241,7 @@ words, pick one of the checksum words.</span></span>
         <div><div class="kicker">Multiple keys, one wallet</div><h2>Derive a multisig wallet</h2></div>
         <button class="btn delete-key" id="delete-msig" type="button" aria-label="Delete current multisig" disabled>Delete Multisig</button>
       </div>
-      <p class="muted msig-intro">Combine extended public keys into a multisignature wallet. Paste each key origin and extended public key as exported by its signer: <span class="mono">[fingerprint/48h/0h/0h/2h]xpub…</span>. Private keys are not needed. The derived addresses can receive bitcoin, and spending requires the configured number of signatures.</p>
+      <p class="muted msig-intro">Combine extended public keys into a multisignature wallet. Each co-signer field accepts exactly one extended public key, optionally preceded by its key origin: <span class="mono">[fingerprint/48h/0h/0h/2h]xpub…</span>. Do not paste a complete output descriptor. Private keys are not needed. The derived addresses can receive bitcoin, and spending requires the configured number of signatures.</p>
       <div class="msig-threshold-labels">
         <label for="msig-m-number"><span>Signatures needed to spend (m)</span><input class="msig-threshold-number" id="msig-m-number" type="number" min="1" max="15" step="1" value="2" inputmode="numeric" aria-describedby="msig-threshold-help"></label>
         <label for="msig-n-number"><span>Total signing keys (n)</span><input class="msig-threshold-number" id="msig-n-number" type="number" min="1" max="15" step="1" value="3" inputmode="numeric" aria-describedby="msig-threshold-help"></label>

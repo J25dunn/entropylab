@@ -673,6 +673,16 @@ test("multisig consistently uses derive for its heading and action", () => {
   assert.match(app, /let\{network,coinType,count,addressStart,branchStart,branchRange,n,m,kind,purpose,hardening,legacyStandard,nodes,xpubs,keyTokens,accountSummary,accountWarning\}=hodlValidatedMsigInputs\(\)/);
 });
 
+test("multisig co-signer copy describes the one-key input contract", () => {
+  for (const markup of [template, appSource]) {
+    assert.match(markup, /Each co-signer field accepts exactly one extended public key, optionally preceded by its key origin/);
+    assert.match(markup, /Do not paste a complete output descriptor/);
+  }
+  assert.match(appSource, /Paste one extended public key per co-signer field, optionally with \[fingerprint\/path\] origin notation\. Do not paste a complete output descriptor\./);
+  assert.match(appSource, /ta\.dataset\.outputDescriptor = hodlLooksOutputDescriptor\(ta\.value\) \? "true" : ""/);
+  assert.match(appSource, /field\?\.dataset\.outputDescriptor === "true"/);
+});
+
 test("key and multisig add controls stay pinned to the right of their tab strips", () => {
   assert.match(css, /\.key-tab-strip \{ display: flex; align-items: flex-end; min-width: 0; margin-top: 12px; \}/);
   assert.match(css, /\.key-tabs \{\s*display: flex;[^}]*flex: 1 1 auto; min-width: 0;/s);
