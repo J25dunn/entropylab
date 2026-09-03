@@ -1424,8 +1424,10 @@ test("the Keys tool intro tells what the calculator does, like the other tool in
   for (const markup of [template, appSource]) {
     // No placeholder copy rides the page's first tool intro.
     assert.doesNotMatch(markup, /lorem ipsum/i);
-    assert.match(markup, /<p class="muted calc-intro">Turn entropy you bring (?:—|\\u2014) dice rolls, playing cards, a number in any base, a seed phrase, or a private key/);
-    assert.match(markup, /This does not invent entropy (?:—|\\u2014) it is a calculator, and nothing leaves this page\.<\/p>/);
+    assert.match(markup, /<p class="muted calc-intro">Roll dice, flip coins, or import an existing seed (?:—|\\u2014) entirely offline\./);
+    assert.match(markup, /turns your raw entropy into a BIP39 mnemonic, derives receive addresses and an xpub for watch-only wallets/);
+    assert.match(markup, /builds multisig setups, and decodes PSBTs before you sign\./);
+    assert.match(markup, /Nothing leaves your machine until you choose to export it\.<\/p>/);
   }
 });
 
