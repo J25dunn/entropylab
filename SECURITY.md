@@ -42,9 +42,10 @@ material. Its security posture rests on the following model:
   RFC 6979 with caller-fixed extra entropy). BIP32 extended-key derivation,
   BIP39 mnemonics, Base58Check, bech32m, and address/script construction run
   on rust-bitcoin's crates in the same module. CI rebuilds the WASM from the
-  committed Rust sources and runs its test suite against
-  the fresh build before any deployment; the artifact job then commits the
-  runner's copy back to the repository, the same flow as the site artifact.
+  committed Rust sources and tests the fresh modules before building the
+  site. Those same modules are bundled with the HTML candidate for downstream
+  source and browser tests, deployment, and the post-merge artifact commit;
+  publication does not compile a second WASM copy.
    Cross-machine byte identity is not claimed — the C side compiles with the
    builder's clang, and build-host paths are remapped out of the binary.
   iOS/macOS Lockdown Mode disables WebAssembly. Exclude the site in Safari
